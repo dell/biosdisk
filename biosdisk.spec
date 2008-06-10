@@ -35,7 +35,6 @@ mkdir -p %{buildroot}/etc
 #place files
 install -m 755 biosdisk %{buildroot}/usr/sbin
 install -m 755 blconf %{buildroot}/usr/sbin
-#install -m 755 geturl %{buildroot}/usr/sbin
 install -m 644 dosdisk.img %{buildroot}/usr/share/%{name}
 install -m 644 biosdisk.conf %{buildroot}/etc
 install -m 644 biosdisk-mkrpm-redhat-template.spec %{buildroot}/usr/share/biosdisk
@@ -51,7 +50,6 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %attr(0755,root,root) /usr/sbin/biosdisk
 %attr(0755,root,root) /usr/sbin/blconf
-#%attr(0755,root,root) /usr/sbin/geturl
 /var/lib
 /usr/share/biosdisk/
 %config /etc/biosdisk.conf
