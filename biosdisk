@@ -95,8 +95,8 @@ function makeImage()
     tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
     cp -f $dosDisk $destination
     mount -t vfat $destination $tmpMount -o loop
-    cp -f $biosFile $tmpMount
-    echo "$biosName $options" > $tmpMount/autoexec.bat
+    cp -f $biosFile $tmpMount/${shortBiosName}
+    echo "$shortBiosName $options" > $tmpMount/autoexec.bat
     unix2dos $tmpMount/autoexec.bat > /dev/null 2>&1
     umount $tmpMount
     rm -rf $tmpMount
@@ -275,6 +275,19 @@ function findDistro()
             echo "Linux distribution unknown. Please specify the package type with the --pkgtype option on the command line"
              exit 1
         fi
+    fi
+}
+
+# shorten names from N.3 to 8.3
+function shortname()
+{
+    local name=$1
+    local extension=${name:(-4)}
+    local leftname=$(basename ${name} ${extension})
+    if [ ${#leftname} -gt 8 ]; then
+	echo "${leftname:0:8}${extension}"
+    else
+	echo "${name}"
     fi
 }
 
@@ -461,7 +474,8 @@ while [ $# -gt 0 ]; do
                             exe|EXE)
                                 biosPath=`dirname $file`
                                 biosFile=$file
-                                biosName=`basename $file`
+                                biosName=$(basename $file)
+				shortBiosName=$(shortname $biosName)
                                 ;;
                             *)
                                 echo "Error: $file must end in .img or .exe"
