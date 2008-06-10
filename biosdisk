@@ -105,7 +105,7 @@ function makeImage()
     if ! [ "$uninstallFlag" == 1 ]; then
         if [ "$mkFloppyFlag" == 1 ]; then
             echo "Creating BIOS boot floppy on $device"
-            dd if=$destination of=$device
+            dd if=$destination of=$device bs=72k count=20
         elif [ "$mkPkgFlag" == 0 ]; then
             echo "Creating BIOS floppy image at $destination"
         fi
