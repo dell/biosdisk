@@ -22,7 +22,6 @@
 # Last Update: 2007-12-21
 baseDir="/usr/share/biosdisk"
 confFile="/etc/biosdisk.conf"
-tmpMount="/tmp/biosdisk"
 libDir="/var/lib/biosdisk"
 tmpPath="/tmp"
 curDir=`pwd`
@@ -93,7 +92,7 @@ function makeImage()
     fi
    
     set -x 
-    mkdir -p $tmpMount
+    tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
     cp -f $dosDisk $destination
     mount -t vfat $destination $tmpMount -o loop
     cp -f $biosFile $tmpMount
