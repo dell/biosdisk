@@ -1,5 +1,5 @@
 %define name biosdisk
-%define version 0.65
+%define version 0.75
 %define release 1
 
 Summary: biosdisk package for creating BIOS flash floppy images
@@ -7,13 +7,13 @@ Name: %{name}
 Version: %{version}
 Release: %{release}
 Vendor: Dell Computer Corp
-Copyright: GPL
+License: GPL
 Group:    Applications/File
 Packager: Dell Computer Corporation - John Hull (john_hull@dell.com)
 Source0:  %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}
 BuildArch: noarch
-Requires: python >= 2.2, /usr/bin/dos2unix, syslinux, wget
+Requires: python >= 2.2, unix2dos, syslinux, wget
 
 %description
 Provides biosdisk utility for creating BIOS disk images in Linux
@@ -74,6 +74,8 @@ fi
 %postun
 
 %changelog
+* Tue Dec 18 2007 - John Hull <john_hull@dell.com>
+- Changed dos2unix requirement to unix2dos
 * Fri Nov 12 2004 - John Hull <john_hull@dell.com>
 - updated paths for spec files and biosdisk.conf
 * Wed Sep 15 2004 - John Hull <john_hull@dell.com>

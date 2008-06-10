@@ -1,3 +1,9 @@
+2007-12-22 John Hull <john_hull@dell.com>
+	* Explicitly use /bin/bash to resolve Debian/Ubuntu root issues
+	* Add extra checks to verify that biosdisk being run with options
+	* Switch from cat to dd for creating floppy 
+	* Updated to version 0.75 
+
 2004-11-18 John Hull <john_hull@dell.com>
 	* biosdisk: switched to wget in place of geturl
         * biosdisk: fix several bugs related to URL downloads
@@ -52,3 +58,11 @@
 2004-07-15 John Hull <john_hull@dell.com>
 
 	* biosdisk: added support for actions: mkfloppy, mkimage, mkpkg
+
+2007-07-07 John Hull <john_hull@dell.com>
+
+	* Fixed menu.lst overwrite problem when install specified with no args
+	* Fixed unix2dos dependency check in install script
+	* Changed from "cat" to "dd" when writing to floppy
+	* Fixed bad shell commands on Ubuntu OSes
+        

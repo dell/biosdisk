@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## Simple Install script for biosdisk
 ## John Hull <john_hull@dell.com>
 

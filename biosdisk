@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #  Copyright (C) 2004 Dell Computer Corporation <john_hull@dell.com>
 #
@@ -19,8 +19,7 @@
 # Purpose: This program can be used to quickly create a bootable DOS disk
 # with a BIOS flash executable file
 #
-# Last Update: 2004-11-12
-
+# Last Update: 2007-12-21
 baseDir="/usr/share/biosdisk"
 confFile="/etc/biosdisk.conf"
 tmpMount="/tmp/biosdisk"
@@ -38,9 +37,11 @@ mkFloppyFlag=0
 mkPkgFlag=0
 mkImgFlag=1 #TODO: needed?
 installFlag=0
+pkgInstallFlag=0
 imgCompleteFlag=0
 forceFlag=1
 destSpecifiedFlag=0
+file=""
 
 if [ -e "$confFile" ]; then
     source "$confFile"
@@ -90,7 +91,8 @@ function makeImage()
             esac
         done
     fi
-    
+   
+    set -x 
     mkdir -p $tmpMount
     cp -f $dosDisk $destination
     mount -t vfat $destination $tmpMount -o loop
@@ -103,7 +105,7 @@ function makeImage()
     if ! [ "$uninstallFlag" == 1 ]; then
         if [ "$mkFloppyFlag" == 1 ]; then
             echo "Creating BIOS boot floppy on $device"
-            cat $destination > $device
+            dd if=$destination of=$device
         elif [ "$mkPkgFlag" == 0 ]; then
             echo "Creating BIOS floppy image at $destination"
         fi
@@ -165,7 +167,7 @@ function makeDpkg()
     debian/rules binary
     cd $curDir
     echo "Debian package created in $dpkgPath"
-    if [ "$installFlag" == 1 ]; then
+    if [ "$pkgInstallFlag" == 1 ]; then
 	echo "Installing Debian package"
         dpkg --install "$dpkgPath/$dpkgName"
     fi 
@@ -245,7 +247,7 @@ function makeRpm()
         rm -f $destination
     fi
 
-    if [ "$installFlag" == 1 ]; then
+    if [ "$pkgInstallFlag" == 1 ]; then
         rpm -ivh $rpmBaseDir/RPMS/noarch/$pkgName-$pkgVersion-$pkgRelease.noarch.rpm
     fi 
 }
@@ -352,7 +354,7 @@ while [ $# -gt 0 ]; do
                 shift
                 ;;
             --install) 
-                installFlag=1
+                pkgInstallFlag=1
                 ;;
             --distro*)
                 if echo $1 | grep '=' >/dev/null ; then
@@ -444,6 +446,7 @@ while [ $# -gt 0 ]; do
                             file=$1
                         fi
 			# In case the download did not work (timeout, programme not found)
+
 			if [ ! -f $file ]; then
 			    echo "Error: Cannot find/use $file"
 			    exit 1
@@ -479,20 +482,18 @@ while [ $# -gt 0 ]; do
     shift    
 done
 
+if [ -z $file ]; then
+    echo "Error: must enter filename"
+    showUsage
+    exit 1
+fi
+
 if [ -z "$destination" ]; then
     destination=$tmpPath/$fileName.img
 fi
 
 if [ "$uninstallFlag" == 1 ]; then
-    if [ -z $distro ]; then
-        findDistro
-    fi
-    if [ $pkgType != "deb" ]; then
     uninstall
-    else
-    	echo "Error: Automatic uninstalls are not supported under $distro"
-        exit 2
-    fi
 fi 
 
 if [ "$mkImgFlag" == 1 ] && [ "$imgCompleteFlag" == 0 ]; then
@@ -500,6 +501,10 @@ if [ "$mkImgFlag" == 1 ] && [ "$imgCompleteFlag" == 0 ]; then
 fi
 
 if [ "$installFlag" == 1 ]; then
+    install
+fi
+
+if [ "$pkgInstallFlag" == 1 ]; then
     if [ -z $distro ]; then
         findDistro
     fi
