@@ -1,0 +1,10 @@
+John A. Hull <john_hull@dell.com>
+- Initial idea primary developer
+
+Gary Lerhaupt <gary_lerhaupt@dell.com>
+- Some of the code, particularly show_usage and make_rpm, were taken from his
+  work in DKMS
+
+Johannes Jordens <j.jordens@ucl.ac.uk>
+- Lots of good ideas and suggested improvements
+

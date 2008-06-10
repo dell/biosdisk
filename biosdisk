@@ -1,0 +1,353 @@
+#!/bin/sh
+#
+#  Copyright (C) 2004 Dell Computer Corporation <john_hull@dell.com>
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# Purpose: This program can be used to quickly create a bootable DOS disk
+# with a BIOS flash executable file
+#
+# Last Update: Jul 19 2004
+
+
+makedisk=0
+tmppath="/tmp/biosdisk"
+make_floppy_flag=0
+make_pkg_flag=0
+make_image_flag=1
+install_flag=0
+options=""
+device="/dev/fd0"
+biosdisk_tree="/var/lib/biosdisk"
+tmp_location="/tmp"
+image_complete=0
+distro=""
+pkg_version=""
+pkg_release=""
+pkg_name=""
+force_flag=1
+dest_specified=0
+
+source /etc/biosdisk/biosdisk.conf
+
+destination=""
+dosdisk=$biosdisk_tree/dosdisk.img
+specfile="/etc/biosdisk/biosdisk-mkrpm-template.spec"
+rpm_basedir="$biosdisk_tree/rpm"
+
+# TO DO
+#biosdisk pxeadd [-o option] /path/[rawbiosfile.exe|imagename.img]
+
+
+####################### Functions ########################
+function show_usage()
+{
+    echo $"Usage: $0 [action] [options] /path/filename[.img|.exe]"
+    echo $"  [action]  =  { mkfloppy | mkimage | mkpkg } "
+    echo $"  [options] =  [-o option ] [-d device] [ -k basimage]"
+    echo $"               [-i destination] [--install] [--distro=<distro>]"
+    echo $"               [--name=<pkg name>] [--version=<pkg version>]"
+    echo $"               [--release=<pkg release>] [-h|--help]"
+}
+
+function make_image()
+{
+    # Protect against involuntary overwriting
+    if [ -e $destination ] && [ $force_flag == "0" ]; then
+        echo "Warning: $destination already exists! [O]verwrite/[A]bort?"
+        read choice
+        loop=1
+        while [ $loop == 1 ]; do
+            case $choice in
+               O|o)
+                   rm -f $destination
+                   loop=0
+                   ;;
+               A|a)
+                   echo "$0 aborted by user"
+                   loop=0
+                   exit 1
+                   ;;
+               *)
+                   echo "Warning: $destination already exists! [O]verwrite/[A]bort?"
+                   read choice
+                   ;;
+            esac
+        done
+    fi
+    
+    mkdir -p $tmppath
+    cp -f $dosdisk $destination
+    mount -t vfat $destination $tmppath -o loop
+    cp -f $biosfile $tmppath
+    echo "$biosname $options" > $tmppath/autoexec.bat
+    cd $tmppath
+    unix2dos autoexec.bat > /dev/null 2>&1
+    cd -
+    umount $tmppath
+    rm -rf $tmppath
+                                                                                                                
+    if [ "$make_floppy_flag" == 1 ]; then
+        echo "Creating BIOS boot floppy on $device"
+        cat $destination > $device
+    elif [ "$make_pkg_flag" == 0 ]; then
+        echo "Creating BIOS floppy image at $destination"
+    fi
+}
+
+function setup_pxe()
+{
+    echo "Not yet supported"
+    exit 1
+
+}
+
+function make_rpm()
+{
+    # Create base structure
+    mkdir -p $rpm_basedir
+    mkdir -p $rpm_basedir/BUILD
+    mkdir -p $rpm_basedir/SOURCES
+    mkdir -p $rpm_basedir/SPECS
+    mkdir -p $rpm_basedir/RPMS/noarch
+    mkdir -p $rpm_basedir/SRPMS
+
+    cp -f $destination $rpm_basedir/SOURCES
+    cp -f $specfile $rpm_basedir/SPECS
+
+    if [ -z "$pkg_name" ]; then
+        pkg_name=bios
+    fi
+
+    if [ -z "$pkg_version" ]; then
+        pkg_version=$filename
+    fi
+
+    if [ -z "$pkg_release" ]; then
+        pkg_release=1
+    fi
+
+    rpmbuild --define "_topdir $rpm_basedir" --define "name $pkg_name" --define "version $pkg_version" --define "release $pkg_release" --define "destination $destination" -ba $rpm_basedir/SPECS/`basename $specfile` >/dev/null 2>&1
+
+    if [ "$?" -eq 0 ]; then
+        echo $""
+        echo $"Created $pkg_name-$pkg_version-$pkg_release.noarch.rpm in $rpm_basedir/RPMS/noarch/"
+        echo $""
+        echo $"biosdisk: mkrpm Completed."
+    else
+        echo $"Error! There was a problem creating your rpm."
+        exit 7
+    fi
+
+    if [ "$dest_specified" == 0 ]; then
+        rm -f $destination
+    fi
+
+    if [ "$install_flag" == 1 ]; then
+        rpm -ivh $rpm_basedir/RPMS/noarch/$pkg_name-$pkg_version-$pkg_release.noarch.rpm
+    fi 
+}
+
+# see if we can figure out which distro we're running on
+function find_distro()
+{
+    if [ -f /etc/fedora-release ] || [ -f /etc/redhat-release ]; then
+        distro=redhat
+    elif [ -f /etc/SuSE-release ]; then
+        distro=suse
+    elif [ -f /etc/gentoo-release ]; then
+        distro=gentoo
+    else
+        echo "Error: Linux distro unknown. mkpkg can't create package"
+        exit 1
+    fi
+}
+
+###################### Main #################################
+
+if [ `id -u` != 0 ]; then
+    echo "Error: You must run $0 as root"
+    exit 0
+fi
+
+if [ $# -eq 0 ]; then
+    show_usage
+    exit 1
+fi   
+
+eval last=\${$#}
+eval slast=\$`expr $# - 1`
+case $slast in
+    -[a-z])
+        echo "Error: You do not seem to have specified a BiosExe"
+        show_usage
+        exit 1
+        ;;
+esac
+
+
+# find biosdisk action
+case $1 in
+    mkfloppy)
+        make_image_flag=1
+        make_floppy_flag=1
+        ;;
+    mkimage)
+	make_image_flag=1
+        ;;
+    mkpkg)
+        make_image_flag=1
+        make_pkg_flag=1
+        ;;
+    *)
+        echo "Error: biosdisk action incorrect or not specified"
+        show_usage
+        exit 2
+        ;;
+esac
+shift
+
+# Work through options and act accordingly
+while [ $# -gt 0 ]; do
+    if [ "$1" -a "$2" ]; then
+        case $1 in
+            -o)
+                options="$options $2"
+                shift
+                ;;
+            -d)
+                device=$2
+                shift
+                ;;
+            -i) 
+                destination=$2
+                dest_specified=1
+                shift
+                ;;
+            -k)
+                dosdisk=$2
+                shift
+                ;;
+            --install) 
+                install_flag=1
+                ;;
+            --distro*)
+                if echo $1 | grep '=' >/dev/null ; then
+                    distro=`echo $1 | sed 's/^.*=//'`
+                else
+                    distro="$2"
+                    shift
+                fi
+                ;;
+            --name*)
+                if echo $1 | grep '=' >/dev/null ; then
+                    pkg_name=`echo $1 | sed 's/^.*=//'`
+                else
+                    pkg_name="$2"
+                    shift
+                fi
+                ;;
+            --version*)
+                if echo $1 | grep '=' >/dev/null ; then
+                    pkg_version=`echo $1 | sed 's/^.*=//'`
+                else
+                    pkg_version="$2"
+                    shift
+                fi
+                ;;
+            --release*)
+                if echo $1 | grep '=' >/dev/null ; then
+                    pkg_release=`echo $1 | sed 's/^.*=//'`
+                else
+                    pkg_release="$2"
+                    shift
+                fi
+                ;;
+            *)
+                echo "Error: $0 does not take \"$1 $2\" as an option"
+                show_usage
+                exit 1
+		;;
+        esac
+    elif [ "$1" -a -z"$2" ]; then
+        case $1 in
+            -h|--help)
+                show_usage
+                exit 1
+                ;;
+            *)
+             # Testing for validity of last argument which should be raw bios or image file
+             # If we're here but not on the last argument, the user wrote gibberish
+                if [ $last == $1 ]; then
+                    if [ ! -f $1 ] ; then
+                        echo "Error: \"$1\" treated as a file, but its not useable/nonexistent"
+                        show_usage
+                        exit 1
+                    else
+                        filename=`basename $1 | cut -d. -f1`
+                        file_ext=`basename $1 | cut -d. -f2`
+                        case $file_ext in
+                            img|IMG)
+                                image_complete=1
+                                dest_specified=1
+                                destination=$1
+                                ;;
+                            exe|EXE)
+                                biospath=`dirname $1`
+                                biosfile=$1
+                                biosname=`basename $1`
+                                ;;
+                            *)
+                                echo "Error: $1 must end in .img or .exe"
+                                show_usage
+                                exit 1
+                                ;;
+                            esac 
+                    fi
+                else
+                    echo "Error: $0 does not take \"$1\" as an option"
+                    show_usage
+                    exit 1
+                fi
+               ;;
+        esac
+    fi
+    shift    
+done
+
+if [ -z "$destination" ]; then
+    destination=$tmp_location/$filename.img
+fi
+
+if [ "$make_image_flag" == 1 ] && [ "$image_complete" == 0 ]; then
+    make_image
+fi
+
+if [ "$make_pkg_flag"  == 1 ]; then
+    if [ -z "$distro" ]; then
+        find_distro
+    fi
+    case $distro in
+        redhat)
+            make_rpm
+            ;;
+        *)
+            echo "Error: $distro not supported with mkpkg"
+            exit 1
+            ;;
+    esac    
+fi
+
+

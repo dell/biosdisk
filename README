@@ -1,0 +1,38 @@
+README for biosdisk
+
+1. How to use
+To find what options are available to use when executing the biosdisk script,
+type "biosdisk --help". 
+
+2. Booting the biosdisk-created BIOS flash image from GRUB
+
+To set up GRUB to allow a user to boot the BIOS flash image from your hard
+drive, complete the following steps:
+
+    a. Copy the biosdisk-created BIOS flash image to /boot
+    b. Copy the syslinux memdisk file (usually found in 
+       /usr/lib/syslinux) to /boot
+    c. Edit your grub.conf file with the following info:
+
+	title BIOS Flash <version>
+       		kernel /memdisk
+		initrd /<imagename>.img
+    d. Reboot your systems and select the BIOS Flash <version> item from
+       the GRUB menu
+
+3. Booting the biosdisk-created BIOS flash image with PXELINUX
+
+To set up GRUB to allow a user to boot the BIOS flash image via a PXELINUX PXE
+server, complete the following steps:
+
+    a. Copy the biosdisk-created BIOS flash image and the SYSLINUX memdisk
+       file (usually found in /usr/lib/syslinux) to your PXELINUX PXE server
+       directory (usually /tftpboot/pxelinux.cfg). 
+    b. Edit the "default" file (usually /tftpboot/pxelinux.cfg/default) to 
+       add the following:
+
+	label BIOS Flash <version>
+		kernel /pxelinux.cfg/memdisk
+		append initrd=/pxelinux.cfg/<imagename>.img
+
+

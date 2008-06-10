@@ -1,0 +1,3 @@
+* Version 0.5 
+  - 15 Jul 2004 - John Hull <john_hull@dell.com>
+  - added support for actions: mkfloppy, mkimage, mkpkg

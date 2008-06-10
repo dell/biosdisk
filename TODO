@@ -1,0 +1,5 @@
+* Make packages to support distros other than Red Hat
+* action + options to update PXELINUX automatically
+* figure out how to recognize other distros 
+* how update bootloader easily in SuSE, Debian, Mandrake, Gentoo, etc.
+* make BIOS install packages for other distros that update bootloader
