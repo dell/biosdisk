@@ -1,0 +1,36 @@
+#!/usr/bin/python
+
+import getopt
+from urllib import urlretrieve
+import sys
+
+value = ''
+filename = ''
+
+def usage():
+    print ("""Usage: geturl -u <url> -n <local file name> """)
+
+try:
+    (opts, rest_args) = getopt.getopt(sys.argv[1:],
+                               "u:n:h",[])
+except (getopt.GetoptError), e:
+    print e
+    print
+    usage()
+    sys.exit(1)
+
+for (opt, value) in opts:
+    if opt == "-h" or opt == "--help":
+        usage()
+        sys.exit(1)
+    if opt == "-u":
+        url = value
+    if opt == "-n":
+        filename = value
+
+if not value or not filename:
+    raise ValueError, "Both a url and filename must be specified"
+    usage()
+    sys.exit()
+
+urlretrieve(url, filename)

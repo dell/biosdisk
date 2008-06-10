@@ -5,6 +5,8 @@ To find what options are available to use when executing the biosdisk script,
 type "biosdisk --help". 
 
 2. Booting the biosdisk-created BIOS flash image from GRUB
+NOTE: The biosdisk "install" action will automatically do the below setup
+      for GRUB.
 
 To set up GRUB to allow a user to boot the BIOS flash image from your hard
 drive, complete the following steps:
@@ -35,4 +37,8 @@ server, complete the following steps:
 		kernel /pxelinux.cfg/memdisk
 		append initrd=/pxelinux.cfg/<imagename>.img
 
+4. In order to restart the computer after the Bios upgrade, press Crtl-Alt-Del
 
+Note: If you are using biosdisk to generate Debian packages, the Bios will show
+up in your bootloader as something like:
+	"Debian/GNU/Linux   Kernel  20041013-dellbios"

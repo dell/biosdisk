@@ -1,0 +1,54 @@
+2004-11-18 John Hull <john_hull@dell.com>
+	* biosdisk: switched to wget in place of geturl
+        * biosdisk: fix several bugs related to URL downloads
+        * biosdisk, biosdisk.8.gz: Revved version to 0.65
+
+2004-11-13 Johannes Jordens <j.jordens@ucl.ac.uk>
+	* dpkgfiles.tar.bz2: updated to new version
+	* TODO: General section
+	* biosdisk.8.gz: updated the man page, Debian specific info
+
+2004-11-12 John Hull <john_hull@dell.com>
+	* biosdisk: Added code to allow the raw bios file to be a URL
+	* geturl: added this file to handle URL grabbing
+	* blconf: Fixed root partition parsing code for SUSE version of GRUB
+	* biosdisk, biosdisk.8.gz: Updated to version 0.62
+
+2004-10-12 Johannes Jordens <j.jordens@ucl.ac.uk>
+
+	* dpkgfiles/postinst, dpkgfiles/postrm: bootloader automagic 
+	  for Debian
+	* dpkgfiles/README.Debian: bootloader explanation
+	* biosdisk, biosdisk.8.gz: bumped version to 0.60
+
+2004-10-10 Johannes Jordens <j.jordens@ucl.ac.uk>
+
+	* biosdisk: added Debian package building capabilities
+	* biosdisk: added --bioslog 
+	* biosdisk.conf: moved to /etc instead of /etc/biosdisk
+	* dpkgfiles.tar.bz2: control files for dpkgs
+	* debian.binary: removed in favour of dpkgfiles.tar.bz2
+	* biosdisk.8.gz: updated to reflect new capabilities
+
+2004-10-09 Johannes Jordens <j.jordens@ucl.ac.uk>
+
+	* ChangeLog: changed to universal (?) format
+	* biosdisk, biosdisk.conf: changed variables to conform to namingScheme
+	* debian, debian.binary: debian control files and package info
+
+2004-08-15 John Hull <john_hull@dell.com>
+
+	* blconf: 0.1 release
+	* biosdisk-mkrpm-generic-template.spec: generic RPM spec file for 
+	  distros other than Red Hat
+	* biosdisk: added install and uninstall actions
+	* biosdisk: released version 0.55
+	
+2004-08-26 John Hull <john_hull@dell.com>
+
+	* biosdisk: added check for Debian distro
+	* biosdisk: released version 0.51
+	    
+2004-07-15 John Hull <john_hull@dell.com>
+
+	* biosdisk: added support for actions: mkfloppy, mkimage, mkpkg

@@ -1,0 +1,331 @@
+#!/usr/bin/python
+#  Copyright (C) 2004 Dell Computer Corporation <john_hull@dell.com>
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+import getopt
+import os
+import re
+import string
+import sys
+
+version = 0.15
+conffile = ''
+label = ''
+kernel_add = ''
+initrd_add = ''
+args = ''
+image_remove = ''
+loader = ''
+test_only = 0
+conflist = { 'grub'    :['/boot/grub/grub.conf', '/boot/grub/menu.lst'], 
+             'lilo'    :['/etc/lilo.conf'],
+             'pxelinux':[ 'None']
+           }
+
+
+def usage():
+    print \
+("""Usage: blconf [OPTIONS]
+Options:
+ -h, --help               display this help and exit
+ -v, --version		  print the blconf version
+ -l, --loader=		  bootloader type (grub, pxelinux, lilo)
+ -c, --config=            bootloader config file to update                                                                                                              
+     --label=,--title=    bootloader entry label
+     --add-kernel=        full path of kernel to add for new entry
+     --add-initrd=        full path of initrd o add for new entry
+     --args=              arguments to add to kernel or initrd line
+     --remove-image=      kernel or initrd to remove from config file
+     --test-only	  Print new config to screen -- do not modify file
+""")
+
+def find_bootloader(conflist, loader, conffile):
+    """Tries to figure out which bootlader and configuration file to use"""
+    # TO DO: need better way to figure out bootloader
+    if not loader:
+        for type in conflist.keys():
+            for file in conflist[type]:
+                if os.path.exists(file):
+                    loader = type
+                    conffile = file
+    else:
+        if conflist.has_key(loader) and os.path.exists(conffile):
+            pass
+        else:
+            raise ValueError, "bootLoader defined not supported or config file defined not found"
+            sys.exit(1)
+
+    if not loader:
+        raise ValueError, "bootLoader not supported or can't be determined"
+        sys.exit(1)
+    else:
+        return (loader, conffile)
+
+
+class bootLoader:
+    # This class is just a helper class, and should only be used as a base
+    # class for specific bootLoader classes. 
+    def __init__(self, conffile, test_only):
+        self.image = ''
+        self.image_word = ''
+        self.label = ''
+        self.label_word = ''
+        self.append = ''
+        self.append_word = ''
+        self.initrd = ''
+        self.initrd_word = ''
+        self.conffile = conffile
+        self.conffile_array = [ [] ]
+        self.search_word = ''
+        self.default_index = ''
+        self.default = ''
+        self.default_sep = ''
+	self.boot_prefix = ''
+        self.array_mod = ''
+        self.test_only = test_only
+
+    def find_default(self):
+        """finds the default value for the bootloader"""
+    # TO DO: fix usage of re and match
+        defaultsearch = re.compile(r'^default*')
+        for i in self.conffile_array[0]:
+            if defaultsearch.match(i):
+                if i.find('=') != -1:
+                    self.default_sep = '='
+                    self.default = i.split(self.default_sep)[1]
+                else:
+                    self.default_sep = ' '
+                    self.default = i.split()[1]
+                self.default_index = self.conffile_array[0].index(i)
+                break
+
+    def add_entry(self, new_block):
+        #Adds a new bootloader entry at top position of config file.
+        #Superclass that inherits from the bootLoader class must contain an
+        # add_entry method that does all of the work to define 'new_block'
+        self.conffile_array.insert(1, new_block)
+        self.array_mod = 1
+
+    def remove_entry(self,remove_item):
+        # Remove entry block from config file based on string passed to it.
+        # Will remove all entry blocks that contain the 'remove_item'
+        count = 0
+        searchname = re.compile(r'[0-9a-zA-Z/]*' + remove_item + '[ \n]')
+        max_index = len(self.conffile_array) - 1
+        while count <= max_index:
+            for line in self.conffile_array[count]:
+                if searchname.search(line):
+                    self.conffile_array.pop(count)
+                    count = count -1
+                    max_index = max_index - 1
+                    self.array_mod = 1
+                    continue
+            count = count + 1
+
+    def read_conf(self):
+        # Read bootloader config file into an array. First row of array
+        # contains  all options, rest of rows are config entries
+        label_search = re.compile(r'^' + self.label_word)
+        file = open(self.conffile, 'r')
+        count = 0
+        
+        for line in file.readlines():
+            if not label_search.match(line):
+                self.conffile_array[count].append(line)
+            else:
+                self.conffile_array.append([])
+                count = count + 1
+                self.conffile_array[count].append(line)
+        
+        file.close()
+
+    def print_conf(self):
+       # Print config file modifications to stdout instead of writing to file
+       for row in self.conffile_array:
+           for col in row:
+               print col
+
+    def write_conf(self):
+        # write modified config file to disk
+        file = open(self.conffile, 'w+')
+
+        for row in self.conffile_array:
+            for col in row:
+               file.write(col)
+        file.close() 
+
+    def output_conf(self):
+        if self.array_mod:
+            if self.test_only:
+                self.print_conf()
+            else:
+                self.write_conf()
+
+    def write_default(self):
+        """Replaces default line in conffile_array with new one"""
+        self.conffile_array[0][self.default_index] = 'default' + self.default_sep + str(self.default) + '\n'
+
+class Grub(bootLoader):
+
+    def __init__(self, conffile, test_only):
+        bootLoader.__init__(self, conffile, test_only)
+        self.image_word = 'kernel'
+        self.label_word = 'title'
+        self.initrd_word = 'initrd'
+        self.search_word = self.label_word
+        self.grub_root = ''
+        self.read_conf()
+        self.find_default()
+        self.root_has_own_line = 1
+        self.find_grub_root()       
+
+    def find_default(self):
+        bootLoader.find_default(self)
+        self.default = int(self.default) 
+
+    def add_entry(self, title, kernel_add, initrd_add, args):
+        new_block = []
+	(kernel_add, initrd_add) = self.check_boot_prefix(kernel_add, initrd_add)
+        title = self.label_word + ' ' + title + '\n'
+        root =   '\t' + 'root ' + self.grub_root + '\n'
+        kernel = '\t' + self.image_word  + ' ' + self.boot_prefix + kernel_add + ' ' + args + '\n'
+        initrd = '\t' + self.initrd_word + ' ' + self.boot_prefix + initrd_add + '\n'
+        bootLoader.add_entry(self, [title, root, kernel, initrd])
+        self.increment_default()
+        self.output_conf()
+
+    def remove_entry(self,remove_item):
+        count = 1
+        searchname = re.compile(remove_item)
+        max_index = len(self.conffile_array) - 1
+        while count <= max_index:
+            for line in self.conffile_array[count]:
+                if searchname.search(line):
+                    self.conffile_array.pop(count)
+                    if self.default >= count:
+                        self.decrement_default()
+                    count = count -1
+                    max_index = max_index - 1
+                    self.array_mod = 1
+                    break
+            count = count + 1
+        self.output_conf()
+                
+    def find_grub_root(self):
+        # search default index for root line or root info	
+        # figure out if don't need separate root line
+        rootsearch = re.compile('(hd[0-9],[0-9])')
+        for line in self.conffile_array[self.default + 1]:
+            if rootsearch.search(line):
+                self.grub_root = '(' + line.split('(')[1].split(')')[0] + ')'
+                break
+
+    def check_boot_prefix(self, kernel, initrd):
+        # See if /boot is on separate partition by checking for it in
+        # /etc/fstab. If it is, then /boot is not needed in the initrd
+        # or kernel paths, so remove accordingly. 
+        fstab = open('/etc/fstab', 'r')
+        for line in fstab.readlines():
+            if line.find('/boot') != -1:
+                kernel = kernel.replace("/boot", "")
+                initrd = initrd.replace("/boot", "")
+		break
+	fstab.close()    
+        return (kernel, initrd)
+
+    def increment_default(self):
+        self.default = self.default + 1
+	self.write_default()
+
+    def decrement_default(self):
+        self.default = self.default - 1
+	self.write_default()
+
+#---------------------- main body ---------------------------#
+try:
+    (opts, rest_args) = getopt.getopt(sys.argv[1:],
+                               "l:c:h",
+                               ["help", "loader=", "config=", "version",
+                                "title=", "add-kernel=", "add-initrd=",
+                                "args=", "remove-image=", "test-only" ])
+except (getopt.GetoptError), e:
+    print e
+    print
+    usage()
+    sys.exit(1)
+
+for (opt, value) in opts:
+    if opt == "-h" or opt == "--help":
+        usage()
+        sys.exit(1)
+    if opt == "-v" or opt == "--version":
+        print "Version " + version
+        sys.exit(1)
+    if opt == "-l" or opt == "--loader":
+        loader = value
+    if opt == "-c" or opt == "--config":
+        conffile = value
+    if opt == "--title":
+        label = value
+    if opt == "--add-kernel":
+        kernel_add = value
+    if opt == "--add-initrd":
+        initrd_add = value
+    if opt == "--args":
+        args = value
+    if opt == "--remove-image":
+        image_remove = value
+    if opt == "--test-only":
+        test_only = 1
+
+# if specify bootloader, must specify config file to use also
+# have to either do an add or remove
+if (loader and not conffile) or (conffile and not loader):
+    raise ValueError, "must specify boot loader and config file at same time"
+    sys.exit(0)
+elif not image_remove and not (kernel_add and initrd_add and label):
+    usage()
+    print "Must specify --title/--label, --add-kernel, and add-initrd together, or --remove-image"
+    sys.exit(1)
+
+(loader, conffile) = find_bootloader(conflist, loader, conffile)
+
+# Create loader object
+if loader == 'grub':
+    blconfig = Grub(conffile, test_only) 
+elif loader == 'lilo':
+    print "Lilo is not yet supported"
+    sys.exit(1)
+elif loader == "pxelinux":
+    print "pxelinux is not yet supported"
+    sys.exit(1)
+else:
+    print "bootLoader is not supported"
+    sys.exit(1)
+
+
+##Figure out if we need to add or remove entries, and call methods accordingly
+if (label and initrd_add and kernel_add):
+    if not os.path.exists(kernel_add):
+        print kernel_add + " does not exist!"
+        sys.exit(0)
+    if not os.path.exists(initrd_add):
+        print initrd_add + " does not exist!"
+        sys.exit(0)
+    blconfig.add_entry(label, kernel_add, initrd_add, args)
+elif image_remove:
+    blconfig.remove_entry(image_remove)
+    
