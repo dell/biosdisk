@@ -13,7 +13,7 @@ Source0:  %{name}-%{version}.tar.gz
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch: noarch
 Requires(post): syslinux
-Requires: unix2dos, wget
+Requires: unix2dos, wget, /usr/bin/rpmbuild
 
 %description
 Provides biosdisk utility for creating BIOS disk images in Linux
