@@ -3,7 +3,7 @@ Summary: biosdisk RPM for installing BIOS flash images
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Copyright: GPL
+License: GPLv2+
 Group:    Applications/File
 Packager: biosdisk
 Source0: %{destination}

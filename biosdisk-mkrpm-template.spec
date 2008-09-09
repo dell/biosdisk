@@ -2,8 +2,8 @@
 Summary: biosdisk RPM for installing Dell BIOS flash images
 Name: %{name}
 Version: %{version}
+License: GPLv2+
 Release: %{release}
-Copyright: GPL
 Group:    Applications/File
 Packager: biosdisk
 Source0: %{destination}
