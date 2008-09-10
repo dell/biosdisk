@@ -293,11 +293,6 @@ function shortname()
 
 ###################### Main #################################
 
-if [ `id -u` != 0 ]; then
-    echo "Error: You must run $0 as root"
-    exit 0
-fi
-
 if [ $# -eq 0 ]; then
     showUsage
     exit 1
@@ -494,6 +489,11 @@ while [ $# -gt 0 ]; do
     fi
     shift    
 done
+
+if [ `id -u` != 0 ]; then
+    echo "Error: You must run $0 as root"
+    exit 0
+fi
 
 if [ -z $file ]; then
     echo "Error: must enter filename"
