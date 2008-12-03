@@ -1,9 +1,9 @@
 John Hull:
- * Support for debian packages
+ * Support for creating debian packages
  * action + options to update PXELINUX automatically
- * gentoo emerge packages?
- * blconf support for pxelinux
- * blconf support for lilo
+ * deb package for biosdisk
+ * BIOS iso images
+ * checks for file size, accomodate images larger than floppy
 
 Johannes Jordens:
  * Add written permission to debian copyright file

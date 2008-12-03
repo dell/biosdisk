@@ -47,7 +47,9 @@ if [ -e "$confFile" ]; then
 fi
 
 destination=""
-dosDisk="$baseDir/dosdisk.img"
+dosDisk144="$baseDir/dosdisk.img"
+dosDisk288="$baseDir/dosdisk288.img"
+dosDisk=$dosDisk288
 pkgSupported="Rpm, Dpkg"
 rpmBaseDir="$libDir/rpm"
 dpkgPath=""
@@ -91,7 +93,6 @@ function makeImage()
         done
     fi
    
-    set -x 
     tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
     cp -f $dosDisk $destination
     mount -t vfat $destination $tmpMount -o loop
@@ -103,6 +104,7 @@ function makeImage()
    
     if ! [ "$uninstallFlag" == 1 ]; then
         if [ "$mkFloppyFlag" == 1 ]; then
+	    dosDisk=$dosDisk144
             echo "Creating BIOS boot floppy on $device"
             dd if=$destination of=$device bs=72k count=20
         elif [ "$mkPkgFlag" == 0 ]; then
