@@ -49,7 +49,10 @@ fi
 destination=""
 dosDisk144="$baseDir/dosdisk.img"
 dosDisk288="$baseDir/dosdisk288.img"
-dosDisk=$dosDisk288
+dosDisk8192="$baseDir/dosdisk8192.img"
+geometry_8192="floppy c=8 s=32 h=64"
+dosDisk=$dosDisk8192
+geometry_floppy=$geometry_8192
 pkgSupported="Rpm, Dpkg"
 rpmBaseDir="$libDir/rpm"
 dpkgPath=""
@@ -187,7 +190,7 @@ function install()
         cp -f $destination /boot
         destination=/boot/`basename $destination`
     fi
-    $blconf --title=$title --add-kernel=$kernel --add-initrd=$destination
+    $blconf --title=$title --add-kernel=$kernel --args="$geometry_floppy" --add-initrd=$destination
     echo "Copied image to $destination and updated bootloader"
 
 }

@@ -12,6 +12,7 @@ install -m 755 blconf /usr/sbin
 #install -m 755 geturl /usr/sbin
 install -m 644 dosdisk.img /usr/share/biosdisk
 install -m 644 dosdisk288.img /usr/share/biosdisk
+install -m 644 dosdisk8192.img /usr/share/biosdisk
 install -m 644 biosdisk.conf /etc/
 if [ -e /usr/bin/rpm ] || [ -e /bin/rpm ]; then
     install -m 644 biosdisk-mkrpm-redhat-template.spec /usr/share/biosdisk
