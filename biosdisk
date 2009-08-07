@@ -181,6 +181,10 @@ function makeDpkg()
 function install()
 {
     local kernel="/boot/memdisk"
+    if [ ! -f $kernel ]; then
+        echo "Can't find $kernel image"
+        exit 1
+    fi
 
     if [ -z $title ]; then
         title=`basename $destination`
