@@ -218,6 +218,8 @@ function makeRpm()
 
     if [ "$distro" == "redhat" ]; then
         specfile="$baseDir/biosdisk-mkrpm-redhat-template.spec"
+    elif [ "$distro" == "fedora" ]; then
+	specfile="$baseDir/biosdisk-mkrpm-fedora-template.spec"
     else
         specfile="$baseDir/biosdisk-mkrpm-generic-template.spec"
     fi
@@ -263,7 +265,10 @@ function findDistro()
     if [ -f /etc/mandrake-release ] || [ "$distro" == "mandrake" ]; then
         distro=mandrake
         [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/fedora-release ] || [ -f /etc/redhat-release ] || [ "$distro" == "redhat" ] ; then
+    elif [ -f /etc/fedora-release ] || [ "$distro" == "fedora" ]; then
+	distro=fedora
+	[ -z $pkgType ] && pkgType=rpm
+    elif [ -f /etc/redhat-release ] || [ "$distro" == "redhat" ] ; then
         distro=redhat
         [ -z $pkgType ] && pkgType=rpm
     elif [ -f /etc/SuSE-release ] || [ -f /etc/SuSEconfig ] || [ "$distro" == "suse" ] ; then
