@@ -38,6 +38,7 @@ install -m 755 blconf %{buildroot}%{_sbindir}
 install -m 644 dosdisk.img %{buildroot}%{_datadir}/%{name}
 install -m 644 dosdisk288.img %{buildroot}%{_datadir}/%{name}
 install -m 644 dosdisk8192.img %{buildroot}%{_datadir}/%{name}
+install -m 644 dosdisk20480.img %{buildroot}%{_datadir}/%{name}
 install -m 644 biosdisk.conf %{buildroot}/%{_sysconfdir}
 install -m 644 biosdisk-mkrpm-redhat-template.spec %{buildroot}%{_datadir}/%{name}
 install -m 644 biosdisk-mkrpm-generic-template.spec %{buildroot}%{_datadir}/%{name}

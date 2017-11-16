@@ -50,8 +50,9 @@ destination=""
 dosDisk144="$baseDir/dosdisk.img"
 dosDisk288="$baseDir/dosdisk288.img"
 dosDisk8192="$baseDir/dosdisk8192.img"
+dosDisk20480="$baseDir/dosdisk20480.img"
 geometry_8192="floppy c=8 s=32 h=64"
-dosDisk=$dosDisk8192
+dosDisk=$dosDisk20480
 geometry_floppy=$geometry_8192
 pkgSupported="Rpm, Dpkg"
 rpmBaseDir="$libDir/rpm"
