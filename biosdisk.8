@@ -1,0 +1,56 @@
+.\" -*- nroff -*-
+.TH biosdisk 8 "November 2004" "Version 0.62"
+.SH NAME
+biodisk \- BIOS Flash disk image creation
+.SH SYNOPSIS
+.B biosdisk
+.I [action] [options] filename
+.SH DESCRIPTION
+.B biosdisk
+is a utility that can be used to make a FreeDOS ISO image that can be
+used to flash a Dell system BIOS from GRUB2.
+
+.SH FILENAME GUIDELINES
+.TP
+The filename can be a file local to the system, or it can be an ftp or http URL to a raw BIOS file. For example, passing "http://somedomain.com/700m_A00.exe" or "ftp://ftp.dell.com/bios/700m_A00.exe" to biosdisk will work correctly.
+
+.SH ACTIONS
+.TP
+Note that some options may be silently ignored depending on what distribution biosdisk is run on.
+.TP
+.B mkimage
+Creates a ISO image on the system's hard drive. Requires the user to pass
+the location of the raw BIOS executable file
+.TP 
+.B install
+Will create a biosdisk image (if raw .exe file passed), copy biosdisk image
+file to /boot, and update the bootloader with an entry for the new image. 
+This is ignored on Debian systems.
+.TP 
+.B uninstall
+Will remove the biosdisk image file from /boot, and remove the BIOS entry
+corresponding to that image from the bootloader configuration file. This is 
+ignored on Debian systems.
+.TP
+
+.SH FILENAME
+.TP
+The file name can be either a raw BIOS DOS executable file for the mkimg. However, the file must end in one of the following: .exe, .EXE. The filename should also be the full path to the file.
+.SH OPTIONS
+.TP
+.B -o <option>
+Option to be passed to BIOS executable file at runtime. Can be used with 
+any action
+.TP
+.B -i <destination>
+Path and filename to which the ISO from the mkimage action will
+be written. If not specified, it will create an image in /tmp and name the file based 
+on the BIOS executable name. 
+.TP
+.B -h|--help
+Prints the biosdisk usage options
+.TP
+.SH AUTHOR
+John Hull (john_hull@dell.com)
+.SH WEBPAGE
+.I http://github.com/dell/biosdisk
