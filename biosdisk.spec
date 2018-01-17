@@ -34,7 +34,6 @@ mkdir -p %{buildroot}/%{_sysconfdir}
 
 #place files
 install -m 755 biosdisk %{buildroot}%{_sbindir}
-install -m 755 blconf %{buildroot}%{_sbindir}
 install -m 644 dosdisk.img %{buildroot}%{_datadir}/%{name}
 install -m 644 dosdisk288.img %{buildroot}%{_datadir}/%{name}
 install -m 644 dosdisk8192.img %{buildroot}%{_datadir}/%{name}
@@ -48,7 +47,6 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/biosdisk
-%{_sbindir}/blconf
 %{_localstatedir}/lib/%{name}/
 %{_datadir}/%{name}/
 %config(noreplace) %{_sysconfdir}/%{name}.conf

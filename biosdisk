@@ -22,12 +22,12 @@
 set -e
 
 baseDir="/usr/share/biosdisk"
+grubDir="/etc/grub.d"
 confFile="/etc/biosdisk.conf"
 libDir="/var/lib/biosdisk"
 tmpPath="/tmp"
 curDir=`pwd`
 device="/dev/fd0"
-blconf="/usr/sbin/blconf"
 wget="/usr/bin/wget"
 options=""
 
@@ -95,22 +95,15 @@ function makeImage()
             esac
         done
     fi
-   
+
     tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
-    cp -f $dosDisk $destination
-    mount -t vfat $destination $tmpMount -o loop
+    cp -f $baseDir/freedos-iso/* $tmpMount
     cp -f $biosFile $tmpMount/${shortBiosName}
-    echo "$shortBiosName $options" > $tmpMount/autoexec.bat
-    unix2dos $tmpMount/autoexec.bat > /dev/null 2>&1
-    umount $tmpMount
-    rm -rf $tmpMount
-   
-    if ! [ "$uninstallFlag" == 1 ]; then
-        if [ "$mkFloppyFlag" == 1 ]; then
-	    dosDisk=$dosDisk144
-            echo "Creating BIOS boot floppy on $device"
-            dd if=$destination of=$device bs=72k count=20
-    fi
+    echo "$shortBiosName $options" > $tmpMount/setup.bat
+    unix2dos $tmpMount/setup.bat > /dev/null 2>&1
+    mkisofs -o $destination -q -l -N -boot-info-table \
+            -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
+            -publisher "Dell" -A "Freedos distribution" -V FDOS -v $tmpMount
 }
 
 function setupPxe()
@@ -124,27 +117,37 @@ function install()
 {
     local kernel="/boot/memdisk"
     if [ ! -f $kernel ]; then
-        echo "Can't find $kernel image"
-        exit 1
-    fi
-
-    if [ -z $title ]; then
-        title=`basename $destination`
+        memdisk_done=0
+        for i in /usr/lib/syslinux/memdisk /usr/share/syslinux/memdisk
+        do
+            if [ -e $i ]; then
+                cp -f $i $kernel
+                memdisk_done=1
+            fi
+        done
+        if [ $memdisk_done -eq 0 ]; then
+            echo "Can't find $kernel image"
+            exit 1
+        fi
     fi
 
     if [ `dirname $destination` != "/boot" ]; then
         cp -f $destination /boot
         destination=/boot/`basename $destination`
     fi
-    $blconf --title=$title --add-kernel=$kernel --args="$geometry_floppy" --add-initrd=$destination
+    if [ ! -f $grubDir/42_biosdisk ]; then
+        cp $baseDir/42_biosdisk $grubDir
+    fi
+    update-grub
+    grub-reboot "Flash BIOS"
     echo "Copied image to $destination and updated bootloader"
 
 }
 
 function uninstall()
 {
-
-    $blconf --remove-image=`basename $destination`
+    rm -f $grubDir/42_biosdisk
+    update-grub
     if [ `dirname $destination` != "/boot" ]; then
         destination=/boot/`dirname $destination`
         rm -f $destination

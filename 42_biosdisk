@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+source /usr/lib/grub/grub-mkconfig_lib
+
+cat << EOF
+menuentry "Flash BIOS" {
+	linux16 /boot/memdisk iso
+	initrd16 ###TO_BE_FILLED###
+}
+EOF
