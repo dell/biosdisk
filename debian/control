@@ -1,12 +1,13 @@
 Source: biosdisk
+Section: misc
 Priority: extra
 Maintainer: Dell <linux@dell.com>
 Build-Depends: debhelper (>=9)
-Standards-Version: 3.9.5
+Standards-Version: 4.0.0
 Homepage: http://github.com/dell/biosdisk
 
 Package: biosdisk
-Architecture: any
+Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, genisoimage, syslinux
 Description: FreeDOS based BIOS disk image creator
