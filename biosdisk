@@ -142,7 +142,7 @@ function uninstall()
     rm -f $grubDir/42_biosdisk
     update-grub
     if [ `dirname $destination` != "/boot" ]; then
-        destination=/boot/`dirname $destination`
+        destination=/boot/`basename $destination`
         rm -f $destination
     fi
 
