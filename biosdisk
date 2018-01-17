@@ -128,9 +128,11 @@ function install()
         cp -f $destination /boot
         destination=/boot/`basename $destination`
     fi
-    if [ ! -f $grubDir/42_biosdisk ]; then
+    if [ ! -x $grubDir/42_biosdisk ]; then
         cp $baseDir/42_biosdisk $grubDir
+        chmod +x $grubDir/42_biosdisk
     fi
+    sed -i "s,initrd16.*,initrd16 $destination," $grubDir/42_biosdisk
     update-grub
     grub-reboot "Flash BIOS"
     echo "Copied image to $destination and updated bootloader"
@@ -257,8 +259,9 @@ while [ $# -gt 0 ]; do
 			    echo "Error: Cannot find/use $file"
 			    exit 1
 			fi
-                        fileName=`basename $file | cut -d. -f1`
-                        fileExt=`basename $file | rev | cut -d. -f1 | rev`
+                        basename=`basename $file`
+                        fileName="${basename%.*}"
+                        fileExt="${basename##*.}"
                         case $fileExt in
                             exe|EXE)
                                 biosPath=`dirname $file`
