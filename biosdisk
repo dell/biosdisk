@@ -314,6 +314,10 @@ if [ $# -eq 0 ]; then
     exit 1
 fi   
 
+if [ -d /sys/firmware/efi ]; then
+    echo "Warning: biosdisk images will not work in EFI mode"
+fi
+
 eval last=\${$#}
 eval sLast=\$`expr $# - 1`
 # Catches incomplete switches
