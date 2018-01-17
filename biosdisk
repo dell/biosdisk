@@ -32,7 +32,7 @@ wget="/usr/bin/wget"
 options=""
 
 # Flags
-mkImgFlag=1
+mkImgFlag=0
 installFlag=0
 imgCompleteFlag=0
 forceFlag=1
