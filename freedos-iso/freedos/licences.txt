@@ -1,0 +1,154 @@
+	Mouskeys, Joykeys, Clock, SideWind, and Slowdown
+
+I think that would be OK, as long as it is free.  I would just ask that
+you make sure it includes the latest version of MOUSKEYS (v3.05 as of
+today), and that you consider possibly including some of my other
+programs as well.
+
+Bret
+
+
+On Thu, 28 Jul 2005 09:05:29 -0700 Blair Campbell <blairdude@gmail.com>
+writes:
+> Hi.  I am creating a FreeDOS distribution on CD-ROM, and I would like
+> your permission to distribute Mousekeys as a companion to the other
+> FreeDOS packages on the CD-ROM.  The CD-ROM only contains open-source
+> and freely distributable software, and is completely free.
+>
+> Thanks,
+> Blair Campbell
+
+	EP-320X-S
+
+Dear Blair,
+
+You are welcomed to use the DOS packet driver files of the EP-320X-S Fast
+Ethernet network adapter freely for the FreeDOS project as long as the
+FreeDOS project is free and opened, and the driver files themselves included
+in the future FreeDOS project shall not be held for any responsibility
+caused correspondingly.
+
+Please understand also that we will not make any guarantees, explicit or
+implicit, about the compatibility, reliability and stability of DOS packet
+driver files on the FreeDOS project.
+
+Thank you with my best regards.
+
+Sincerely yours,
+Richer Lu
+
+Product Manager & Dept. Manager of Customer Service Dept.,
+SURECOM Technology Corp.
+
+Web: http://www.surecom.com.tw
+FTP: ftp://surecom-forums.no-ip.biz
+Forums: http://surecom-forums.no-ip.biz:8001/auth/phpbb2/index.php
+
+-----Original Message-----
+From: Blair Campbell [mailto:blairdude@gmail.com]
+Sent: Tuesday, August 02, 2005 1:15 AM
+To: surecom
+Subject: EP-320X-S
+
+Hello.  I am compiling together a FreeDOS distribution
+(http://www.freedos.org), and for the sake of giving the user the greatest
+satasfaction and ease of use, I would like to include the DOS packet driver
+of the EP-320X-S on the CD-ROM.  The driver will be used in an autodetection
+process to allow a user to easily put their FreeDOS installation on the
+internet.  Since there is no licence included with the packet driver, I
+would like your kind permission to distribute your EP-320X-S on my free
+CD-ROM along with the other open-source and freely distributable software on
+the CD-ROM.
+
+Thank you for your time,
+
+Blair Campbell
+
+
+	Realtek 8139 Packet Driver (a little unclear)
+
+Hi Blair,
+
+Thanks for your mail. You can download the driver from under website, there is no problem for Realtek.  
+
+http://www.realtek.com.tw/downloads/downloads1-3.aspx?lineid=1&famid=3&series=16&Software=True
+
+
+Tks,
+Candy
+International Mkt. & Sales Dept.
+REALTEK Semiconductor Corp.
+                                                                                                                                     
+                     Blair Campbell                                                                                                  
+                     <blairdude@gmail.        ???:  sales@realtek.com.tw                                                          
+                     com>                     ????:                                                                              
+                                              ??:    RTS8139                                                                      
+                     2005/07/29 08:28                                                                                                
+                     AM                                                                                                              
+                     ??? ? Blair                                                                                                  
+                     Campbell                                                                                                        
+
+Hi.  I am compiling a FreeDOS distribution (http://www.freedos.org),
+and for the sake of maximum user friendliness, would like to include
+your Realtek 8139 DOS packet driver with my distribution.  As there is
+no specifics about redistribution included with the Realtek driver, I
+would like to have permission to distribute this driver on my free
+CD-ROM.
+
+Thank you for your time,
+
+Blair Campbell
+
+	Xircom CE3 Packet Driver
+
+Hello Blair,
+
+Thank you for contacting Intel(R) Technical Support.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+ 3. Neither the name of the Intel Corporation nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Sincerely,
+
+Rudy B.
+Intel(R) Technical Support
+http://support.intel.com
+
+Intel is a registered trademark of Intel Corporation or its subsidiaries in the United States and other countries.
+
+*Other names and brands may be claimed as the property of others.
+
+	Mine Mayhem and SHSUFDRV
+
+> I was just wondering if you would mind me distributing Mine Mayhem on
+> my FreeDOS distribution.  I would also like permission to modify the
+> zip contents to suit the standard package format.
+
+No worries.
+
+> Could I also have permission to distribute SHSUFDRV in a modified package?
+
+Yep.

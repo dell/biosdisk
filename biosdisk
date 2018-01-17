@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 #  Copyright (C) 2004 Dell Computer Corporation <john_hull@dell.com>
+#  Copyright (C) 2018 Dell Inc. <mario.limonciello@dell.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -19,24 +20,20 @@
 # Purpose: This program can be used to quickly create a bootable DOS disk
 # with a BIOS flash executable file
 #
-# Last Update: 2007-12-21
+set -e
+
 baseDir="/usr/share/biosdisk"
+grubDir="/etc/grub.d"
 confFile="/etc/biosdisk.conf"
 libDir="/var/lib/biosdisk"
 tmpPath="/tmp"
 curDir=`pwd`
-device="/dev/fd0"
-blconf="/usr/sbin/blconf"
 wget="/usr/bin/wget"
 options=""
 
 # Flags
-mkDisk=0 # TODO:used?
-mkFloppyFlag=0
-mkPkgFlag=0
-mkImgFlag=1 #TODO: needed?
+mkImgFlag=0
 installFlag=0
-pkgInstallFlag=0
 imgCompleteFlag=0
 forceFlag=1
 destSpecifiedFlag=0
@@ -47,27 +44,14 @@ if [ -e "$confFile" ]; then
 fi
 
 destination=""
-dosDisk144="$baseDir/dosdisk.img"
-dosDisk288="$baseDir/dosdisk288.img"
-dosDisk8192="$baseDir/dosdisk8192.img"
-dosDisk20480="$baseDir/dosdisk20480.img"
-geometry_8192="floppy c=8 s=32 h=64"
-dosDisk=$dosDisk20480
-geometry_floppy=$geometry_8192
-pkgSupported="Rpm, Dpkg"
-rpmBaseDir="$libDir/rpm"
-dpkgPath=""
-dpkgName=""
 
 ####################### Functions ########################
 function showUsage()
 {
-    echo $"Usage: $0 [action] [options] /path/fileName[.img|.exe]"
-    echo $"  [action]  =  { mkfloppy | mkimage | mkpkg | install | uninstall} "
-    echo $"  [options] =  [-o option ] [-d device] [ -k basimage]"
-    echo $"               [-i destination] [--install] [--distro=<distro>]"
-    echo $"               [--name=<pkg name>] [--version=<pkg version>]"
-    echo $"               [--release=<pkg release>] [--bioslog=<bios changelog>]"
+    echo $"Usage: $0 [action] [options] /path/fileName.exe"
+    echo $"  [action]  =  { mkimage | install | uninstall} "
+    echo $"  [options] =  [-o exe_option ]"
+    echo $"               [-i destination]"
     echo $"               [-h|--help]"
 }
 
@@ -96,25 +80,14 @@ function makeImage()
             esac
         done
     fi
-   
+
     tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
-    cp -f $dosDisk $destination
-    mount -t vfat $destination $tmpMount -o loop
+    cp -R $baseDir/freedos-iso/* $tmpMount
     cp -f $biosFile $tmpMount/${shortBiosName}
-    echo "$shortBiosName $options" > $tmpMount/autoexec.bat
-    unix2dos $tmpMount/autoexec.bat > /dev/null 2>&1
-    umount $tmpMount
-    rm -rf $tmpMount
-   
-    if ! [ "$uninstallFlag" == 1 ]; then
-        if [ "$mkFloppyFlag" == 1 ]; then
-	    dosDisk=$dosDisk144
-            echo "Creating BIOS boot floppy on $device"
-            dd if=$destination of=$device bs=72k count=20
-        elif [ "$mkPkgFlag" == 0 ]; then
-            echo "Creating BIOS floppy image at $destination"
-        fi
-    fi
+    echo "$shortBiosName $options" >> $tmpMount/setup.bat
+    mkisofs -o $destination -q -l -N -boot-info-table \
+            -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
+            -publisher "Dell" -A "Freedos distribution" -V FDOS -v $tmpMount
 }
 
 function setupPxe()
@@ -124,173 +97,56 @@ function setupPxe()
 
 }
 
-function makeDpkg()
+function test_root()
 {
-    # Test if build environment is sufficient/sane
-    if [ ! -f /usr/bin/dpkg ]; then
-	echo "Error: This cannot be a Debian system, you do not have dpkg installed!"
-	exit 1
+    if [ `id -u` != 0 ]; then
+        echo "Error: You must run $0 as root"
+        exit 0
     fi
-    dhStatus=`dpkg -s debhelper | grep "Status"`
-    if [ ! "$dhStatus" == 'Status: install ok installed' ]; then
-        echo "Error: debhelper does not seem to be installed correctly, please install via dpkg!"
-	exit 1
-    fi
-    if [ -z "$pkgName" ]; then
-        pkgName=dellbios
-    fi
-    if [ -z "$pkgVersion" ]; then
-        pkgVersion=`date +%Y%m%d`
-    fi
-    if [ -z "$pkgRelease" ]; then
-        pkgRelease=1
-    fi
-    if [ -z "$biosChangeLog" ]; then
-        biosChangeLog=""
-    fi
-    # pkgRelease treated as debian revision count
-    # current solution imitates a kernel/initrd pair, its suboptimal
-    if [ -e $destination ]; then
-	destDir=`dirname $destination`
-	dpkgPath="$destDir/$pkgName-$pkgVersion"
-    else
-        dpkgPath="$tmpPath/$pkgName-$pkgVersion"
-    fi
-    echo "Building Debian package in $dpkgPath ..."
-    dpkgName=$pkgName"_"$pkgVersion"-"$pkgRelease"_i386.deb"
-    # Redefining $destination, suboptimal
-    destination=$dpkgPath"/initrd.img-"$pkgVersion"-"$pkgName
-    # exporting variables so that make in debian/rules gets them
-    export pkgName pkgVersion pkgRelease dpkgPath biosChangeLog
-    if [ -e $dpkgPath ]; then
-        rm -rf $dpkgPath
-    fi
-    mkdir $dpkgPath
-    tar -x --bzip2 -f "$baseDir/dpkgfiles.tar.bz2" -C $dpkgPath
-    cd $dpkgPath
-    makeImage
-    debian/rules binary
-    cd $curDir
-    echo "Debian package created in $dpkgPath"
-    if [ "$pkgInstallFlag" == 1 ]; then
-	echo "Installing Debian package"
-        dpkg --install "$dpkgPath/$dpkgName"
-    fi 
-    exit 0
 }
 
 function install()
 {
     local kernel="/boot/memdisk"
     if [ ! -f $kernel ]; then
-        echo "Can't find $kernel image"
-        exit 1
-    fi
-
-    if [ -z $title ]; then
-        title=`basename $destination`
+        memdisk_done=0
+        for i in /usr/lib/syslinux/memdisk /usr/share/syslinux/memdisk
+        do
+            if [ -e $i ]; then
+                cp -f $i $kernel
+                memdisk_done=1
+            fi
+        done
+        if [ $memdisk_done -eq 0 ]; then
+            echo "Can't find $kernel image"
+            exit 1
+        fi
     fi
 
     if [ `dirname $destination` != "/boot" ]; then
         cp -f $destination /boot
         destination=/boot/`basename $destination`
     fi
-    $blconf --title=$title --add-kernel=$kernel --args="$geometry_floppy" --add-initrd=$destination
+    if [ ! -x $grubDir/42_biosdisk ]; then
+        cp $baseDir/42_biosdisk $grubDir
+        chmod +x $grubDir/42_biosdisk
+    fi
+    sed -i "s,initrd16.*,initrd16 $destination," $grubDir/42_biosdisk
+    update-grub
+    grub-reboot "Flash BIOS"
     echo "Copied image to $destination and updated bootloader"
 
 }
 
 function uninstall()
 {
-
-    $blconf --remove-image=`basename $destination`
+    rm -f $grubDir/42_biosdisk
+    update-grub
     if [ `dirname $destination` != "/boot" ]; then
-        destination=/boot/`dirname $destination`
+        destination=/boot/`basename $destination`
         rm -f $destination
     fi
 
-}
-
-function makeRpm()
-{
-    # Create base structure
-    mkdir -p $rpmBaseDir
-    mkdir -p $rpmBaseDir/BUILD
-    mkdir -p $rpmBaseDir/SOURCES
-    mkdir -p $rpmBaseDir/SPECS
-    mkdir -p $rpmBaseDir/RPMS/noarch
-    mkdir -p $rpmBaseDir/SRPMS
-
-    if [ "$distro" == "redhat" ]; then
-        specfile="$baseDir/biosdisk-mkrpm-redhat-template.spec"
-    elif [ "$distro" == "fedora" ]; then
-	specfile="$baseDir/biosdisk-mkrpm-fedora-template.spec"
-    else
-        specfile="$baseDir/biosdisk-mkrpm-generic-template.spec"
-    fi
-        
-    cp -f $destination $rpmBaseDir/SOURCES
-    cp -f $specfile $rpmBaseDir/SPECS
-
-    if [ -z "$pkgName" ]; then
-        pkgName=bios
-    fi
-    if [ -z "$pkgVersion" ]; then
-        pkgVersion=$fileName
-    fi
-    if [ -z "$pkgRelease" ]; then
-        pkgRelease=1
-    fi
-
-    rpmbuild --define "_topdir $rpmBaseDir" --define "name $pkgName" --define "version $pkgVersion" --define "release $pkgRelease" --define "destination $destination" -ba $rpmBaseDir/SPECS/`basename $specfile` >/dev/null 2>&1
-
-    if [ "$?" -eq 0 ]; then
-        echo $""
-        echo $"Created $pkgName-$pkgVersion-$pkgRelease.noarch.rpm in $rpmBaseDir/RPMS/noarch/"
-        echo $""
-        echo $"biosdisk: mkrpm Completed."
-    else
-        echo $"Error: There was a problem creating your rpm."
-        exit 7
-    fi
-
-    if [ "$destSpecifiedFlag" == 0 ]; then
-        rm -f $destination
-    fi
-
-    if [ "$pkgInstallFlag" == 1 ]; then
-        rpm -ivh $rpmBaseDir/RPMS/noarch/$pkgName-$pkgVersion-$pkgRelease.noarch.rpm
-    fi 
-}
-
-# see if we can figure out which distro we're running on
-# only rudimentary check for Debian, further checks are in makeDpkg
-function findDistro()
-{
-    if [ -f /etc/mandrake-release ] || [ "$distro" == "mandrake" ]; then
-        distro=mandrake
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/fedora-release ] || [ "$distro" == "fedora" ]; then
-	distro=fedora
-	[ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/redhat-release ] || [ "$distro" == "redhat" ] ; then
-        distro=redhat
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/SuSE-release ] || [ -f /etc/SuSEconfig ] || [ "$distro" == "suse" ] ; then
-        distro=suse
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/gentoo-release ] || [ "$distro" == "gentoo" ] ; then
-        distro=gentoo
-        [ -z $pkgType ] && pkgType=emerge
-    elif [ -f /etc/debian_version ] || [ "$distro" == "debian" ] ; then
-        distro=debian
-        [ -z $pkgType ] && pkgType=deb
-    else
-        if [ -z $pkgType ]; then
-            echo "Linux distribution unknown. Please specify the package type with the --pkgtype option on the command line"
-             exit 1
-        fi
-    fi
 }
 
 # shorten names from N.3 to 8.3
@@ -311,7 +167,11 @@ function shortname()
 if [ $# -eq 0 ]; then
     showUsage
     exit 1
-fi   
+fi
+
+if [ -d /sys/firmware/efi ]; then
+    echo "Warning: biosdisk images will not work in EFI mode"
+fi
 
 eval last=\${$#}
 eval sLast=\$`expr $# - 1`
@@ -328,16 +188,8 @@ esac
 
 # find biosdisk action
 case $1 in
-    mkfloppy|mkFloppy)
-        mkImgFlag=1
-        mkFloppyFlag=1
-        ;;
     mkimage|mkImage)
 	mkImgFlag=1
-        ;;
-    mkpkg|mkPkg)
-        mkImgFlag=1
-        mkPkgFlag=1
         ;;
     install)
         mkImgFlag=1
@@ -362,77 +214,10 @@ while [ $# -gt 0 ]; do
                 options="$options $2"
                 shift
                 ;;
-            -d)
-                device=$2
-                shift
-                ;;
-            -i) 
+            -i)
                 destination=$2
                 destSpecifiedFlag=1
                 shift
-                ;;
-            -k)
-                dosDisk=$2
-                shift
-                ;;
-            --install) 
-                pkgInstallFlag=1
-                ;;
-            --distro*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    distro=`echo $1 | sed 's/^.*=//'`
-                else
-                    distro="$2"
-                    shift
-                fi
-                ;;
-            --name*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgName=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgName="$2"
-                    shift
-                fi
-                ;;
-            --version*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgVersion=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgVersion="$2"
-                    shift
-                fi
-                ;;
-            --release*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgRelease=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgRelease="$2"
-                    shift
-                fi
-                ;;
-            --pkgtype*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgType=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgType="$2"
-                    shift
-                fi
-                ;;
-            --title*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    title=`echo $1 | sed 's/^.*=//'`
-                else
-                    title="$2"
-                    shift
-                fi
-                ;;
-            --bioslog*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    biosChangeLog=`echo $1 | sed 's/^.*=//'`
-                else
-                    biosChangeLog="$2"
-                    shift
-                fi
                 ;;
             *)
                 echo "Error: $0 does not take \"$1 $2\" as an option"
@@ -458,6 +243,10 @@ while [ $# -gt 0 ]; do
                     else
                         #If file is url, then get it
                         if [ `echo $1 | grep -c "^[fhFH][tT][Tt]*[pP]"` -eq 1 ]; then
+                            if ! [ -x $wget ]; then
+                                echo "Can't find $wget. Please install wget on your system"
+                                exit 1
+                            fi
                             file=$libDir/`basename $1`
 			    $wget -O $file $1
                             if ! [ -f $file ]; then
@@ -473,14 +262,10 @@ while [ $# -gt 0 ]; do
 			    echo "Error: Cannot find/use $file"
 			    exit 1
 			fi
-                        fileName=`basename $file | cut -d. -f1`
-                        fileExt=`basename $file | rev | cut -d. -f1 | rev`                 
+                        basename=`basename $file`
+                        fileName="${basename%.*}"
+                        fileExt="${basename##*.}"
                         case $fileExt in
-                            img|IMG)
-                                imgCompleteFlag=1
-                                destSpecifiedFlag=1
-                                destination=$file
-                                ;;
                             exe|EXE)
                                 biosPath=`dirname $file`
                                 biosFile=$file
@@ -488,7 +273,7 @@ while [ $# -gt 0 ]; do
 				shortBiosName=$(shortname $biosName)
                                 ;;
                             *)
-                                echo "Error: $file must end in .img or .exe"
+                                echo "Error: $file must end in .exe"
                                 showUsage
                                 exit 1
                                 ;;
@@ -502,13 +287,8 @@ while [ $# -gt 0 ]; do
                ;;
         esac
     fi
-    shift    
+    shift
 done
-
-if [ `id -u` != 0 ]; then
-    echo "Error: You must run $0 as root"
-    exit 0
-fi
 
 if [ -z $file ]; then
     echo "Error: must enter filename"
@@ -517,12 +297,15 @@ if [ -z $file ]; then
 fi
 
 if [ -z "$destination" ]; then
-    destination=$tmpPath/$fileName.img
+    destination=$tmpPath/$fileName.iso
+fi
+if [ "$installFlag" == 1 ] || [ "$uninstallFlag" == 1 ]; then
+    test_root
 fi
 
 if [ "$uninstallFlag" == 1 ]; then
     uninstall
-fi 
+fi
 
 if [ "$mkImgFlag" == 1 ] && [ "$imgCompleteFlag" == 0 ]; then
     makeImage
@@ -531,36 +314,3 @@ fi
 if [ "$installFlag" == 1 ]; then
     install
 fi
-
-if [ "$pkgInstallFlag" == 1 ]; then
-    if [ -z $distro ]; then
-        findDistro
-    fi
-    if [ $pkgType != "deb" ]; then
-    install
-    else
-    	echo "Error: Automatic installs are not supported under $distro"
-        exit 2
-    fi
-fi
-
-if [ "$mkPkgFlag"  == 1 ]; then
-    if [ -z "$distro" ] || [ -z "$pkgType" ]; then
-        findDistro
-    fi
-
-    case $pkgType in
-        rpm)
-            makeRpm
-            ;;
-        deb)
-            makeDpkg
-            ;;
-        *)
-            echo "Error: $pkgType not supported with mkpkg. Supported package types are: $pkgSupported"
-            exit 1
-            ;;
-    esac    
-fi
-
-

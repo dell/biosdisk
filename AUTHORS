@@ -8,3 +8,6 @@ Johannes Jordens <j.jordens@ucl.ac.uk>
 - Lots of good ideas and suggested improvements, 
   Debian integration
 
+Mario Limonciello <mario.limonciello@dell.com>
+- Overhaul to remove cruft that didn't age well
+- Simplify code paths to work with GRUB2

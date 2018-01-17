@@ -1,6 +1,0 @@
-INSTALL INSTRUCTIONS for biosdisk
-
-Run the install script by typing "sh install.sh" at a command prompt.
-This will check dependencies, copy the biosdisk script to /usr/sbin, and
-dosdisk.img to /usr/share/biosdisk. Program is then ready to run.
-
