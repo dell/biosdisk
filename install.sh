@@ -2,8 +2,6 @@
 ## Simple Install script for biosdisk
 ## John Hull <john_hull@dell.com>
 
-sh checkdeps.sh
-
 mkdir -p /var/lib/biosdisk
 mkdir -p /usr/share/biosdisk
 

@@ -85,7 +85,6 @@ function makeImage()
     cp -R $baseDir/freedos-iso/* $tmpMount
     cp -f $biosFile $tmpMount/${shortBiosName}
     echo "$shortBiosName $options" >> $tmpMount/setup.bat
-    unix2dos $tmpMount/setup.bat > /dev/null 2>&1
     mkisofs -o $destination -q -l -N -boot-info-table \
             -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
             -publisher "Dell" -A "Freedos distribution" -V FDOS -v $tmpMount
@@ -244,6 +243,10 @@ while [ $# -gt 0 ]; do
                     else
                         #If file is url, then get it
                         if [ `echo $1 | grep -c "^[fhFH][tT][Tt]*[pP]"` -eq 1 ]; then
+                            if ! [ -x $wget ]; then
+                                echo "Can't find $wget. Please install wget on your system"
+                                exit 1
+                            fi
                             file=$libDir/`basename $1`
 			    $wget -O $file $1
                             if ! [ -f $file ]; then
