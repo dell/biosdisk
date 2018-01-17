@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+
+%:
+		dh $@
+
+override_dh_auto_install:
+	dh_auto_install -- sharedstatedir=debian/tmp/var/lib/biosdisk/ \
+			   prefix=debian/tmp/usr/ \
+			   confdir=debian/tmp/etc/
+
+

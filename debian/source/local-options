@@ -1,0 +1,3 @@
+#### Uncomment to active options. See dpkg-source(1)
+#unapply-patches
+#abort-on-upstream-changes

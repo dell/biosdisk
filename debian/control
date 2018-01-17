@@ -1,0 +1,15 @@
+Source: biosdisk
+Priority: extra
+Maintainer: Dell <linux@dell.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.5
+Homepage: http://github.com/dell/biosdisk
+
+Package: biosdisk
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, genisoimage, syslinux
+Description: FreeDOS based BIOS disk image creator
+ Produces FreeDOS based images for flashing BIOS
+ or any firmware while the machine is booted in legacy
+ mode.
