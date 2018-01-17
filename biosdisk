@@ -34,10 +34,8 @@ options=""
 # Flags
 mkDisk=0 # TODO:used?
 mkFloppyFlag=0
-mkPkgFlag=0
 mkImgFlag=1 #TODO: needed?
 installFlag=0
-pkgInstallFlag=0
 imgCompleteFlag=0
 forceFlag=1
 destSpecifiedFlag=0
@@ -64,7 +62,7 @@ dpkgName=""
 function showUsage()
 {
     echo $"Usage: $0 [action] [options] /path/fileName[.img|.exe]"
-    echo $"  [action]  =  { mkfloppy | mkimage | mkpkg | install | uninstall} "
+    echo $"  [action]  =  { mkfloppy | mkimage | install | uninstall} "
     echo $"  [options] =  [-o option ] [-d device] [ -k basimage]"
     echo $"               [-i destination] [--install] [--distro=<distro>]"
     echo $"               [--name=<pkg name>] [--version=<pkg version>]"
@@ -112,9 +110,6 @@ function makeImage()
 	    dosDisk=$dosDisk144
             echo "Creating BIOS boot floppy on $device"
             dd if=$destination of=$device bs=72k count=20
-        elif [ "$mkPkgFlag" == 0 ]; then
-            echo "Creating BIOS floppy image at $destination"
-        fi
     fi
 }
 
@@ -123,61 +118,6 @@ function setupPxe()
     echo "Not yet supported"
     exit 1
 
-}
-
-function makeDpkg()
-{
-    # Test if build environment is sufficient/sane
-    if [ ! -f /usr/bin/dpkg ]; then
-	echo "Error: This cannot be a Debian system, you do not have dpkg installed!"
-	exit 1
-    fi
-    dhStatus=`dpkg -s debhelper | grep "Status"`
-    if [ ! "$dhStatus" == 'Status: install ok installed' ]; then
-        echo "Error: debhelper does not seem to be installed correctly, please install via dpkg!"
-	exit 1
-    fi
-    if [ -z "$pkgName" ]; then
-        pkgName=dellbios
-    fi
-    if [ -z "$pkgVersion" ]; then
-        pkgVersion=`date +%Y%m%d`
-    fi
-    if [ -z "$pkgRelease" ]; then
-        pkgRelease=1
-    fi
-    if [ -z "$biosChangeLog" ]; then
-        biosChangeLog=""
-    fi
-    # pkgRelease treated as debian revision count
-    # current solution imitates a kernel/initrd pair, its suboptimal
-    if [ -e $destination ]; then
-	destDir=`dirname $destination`
-	dpkgPath="$destDir/$pkgName-$pkgVersion"
-    else
-        dpkgPath="$tmpPath/$pkgName-$pkgVersion"
-    fi
-    echo "Building Debian package in $dpkgPath ..."
-    dpkgName=$pkgName"_"$pkgVersion"-"$pkgRelease"_i386.deb"
-    # Redefining $destination, suboptimal
-    destination=$dpkgPath"/initrd.img-"$pkgVersion"-"$pkgName
-    # exporting variables so that make in debian/rules gets them
-    export pkgName pkgVersion pkgRelease dpkgPath biosChangeLog
-    if [ -e $dpkgPath ]; then
-        rm -rf $dpkgPath
-    fi
-    mkdir $dpkgPath
-    tar -x --bzip2 -f "$baseDir/dpkgfiles.tar.bz2" -C $dpkgPath
-    cd $dpkgPath
-    makeImage
-    debian/rules binary
-    cd $curDir
-    echo "Debian package created in $dpkgPath"
-    if [ "$pkgInstallFlag" == 1 ]; then
-	echo "Installing Debian package"
-        dpkg --install "$dpkgPath/$dpkgName"
-    fi 
-    exit 0
 }
 
 function install()
@@ -210,88 +150,6 @@ function uninstall()
         rm -f $destination
     fi
 
-}
-
-function makeRpm()
-{
-    # Create base structure
-    mkdir -p $rpmBaseDir
-    mkdir -p $rpmBaseDir/BUILD
-    mkdir -p $rpmBaseDir/SOURCES
-    mkdir -p $rpmBaseDir/SPECS
-    mkdir -p $rpmBaseDir/RPMS/noarch
-    mkdir -p $rpmBaseDir/SRPMS
-
-    if [ "$distro" == "redhat" ]; then
-        specfile="$baseDir/biosdisk-mkrpm-redhat-template.spec"
-    elif [ "$distro" == "fedora" ]; then
-	specfile="$baseDir/biosdisk-mkrpm-fedora-template.spec"
-    else
-        specfile="$baseDir/biosdisk-mkrpm-generic-template.spec"
-    fi
-        
-    cp -f $destination $rpmBaseDir/SOURCES
-    cp -f $specfile $rpmBaseDir/SPECS
-
-    if [ -z "$pkgName" ]; then
-        pkgName=bios
-    fi
-    if [ -z "$pkgVersion" ]; then
-        pkgVersion=$fileName
-    fi
-    if [ -z "$pkgRelease" ]; then
-        pkgRelease=1
-    fi
-
-    rpmbuild --define "_topdir $rpmBaseDir" --define "name $pkgName" --define "version $pkgVersion" --define "release $pkgRelease" --define "destination $destination" -ba $rpmBaseDir/SPECS/`basename $specfile` >/dev/null 2>&1
-
-    if [ "$?" -eq 0 ]; then
-        echo $""
-        echo $"Created $pkgName-$pkgVersion-$pkgRelease.noarch.rpm in $rpmBaseDir/RPMS/noarch/"
-        echo $""
-        echo $"biosdisk: mkrpm Completed."
-    else
-        echo $"Error: There was a problem creating your rpm."
-        exit 7
-    fi
-
-    if [ "$destSpecifiedFlag" == 0 ]; then
-        rm -f $destination
-    fi
-
-    if [ "$pkgInstallFlag" == 1 ]; then
-        rpm -ivh $rpmBaseDir/RPMS/noarch/$pkgName-$pkgVersion-$pkgRelease.noarch.rpm
-    fi 
-}
-
-# see if we can figure out which distro we're running on
-# only rudimentary check for Debian, further checks are in makeDpkg
-function findDistro()
-{
-    if [ -f /etc/mandrake-release ] || [ "$distro" == "mandrake" ]; then
-        distro=mandrake
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/fedora-release ] || [ "$distro" == "fedora" ]; then
-	distro=fedora
-	[ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/redhat-release ] || [ "$distro" == "redhat" ] ; then
-        distro=redhat
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/SuSE-release ] || [ -f /etc/SuSEconfig ] || [ "$distro" == "suse" ] ; then
-        distro=suse
-        [ -z $pkgType ] && pkgType=rpm
-    elif [ -f /etc/gentoo-release ] || [ "$distro" == "gentoo" ] ; then
-        distro=gentoo
-        [ -z $pkgType ] && pkgType=emerge
-    elif [ -f /etc/debian_version ] || [ "$distro" == "debian" ] ; then
-        distro=debian
-        [ -z $pkgType ] && pkgType=deb
-    else
-        if [ -z $pkgType ]; then
-            echo "Linux distribution unknown. Please specify the package type with the --pkgtype option on the command line"
-             exit 1
-        fi
-    fi
 }
 
 # shorten names from N.3 to 8.3
@@ -340,10 +198,6 @@ case $1 in
     mkimage|mkImage)
 	mkImgFlag=1
         ;;
-    mkpkg|mkPkg)
-        mkImgFlag=1
-        mkPkgFlag=1
-        ;;
     install)
         mkImgFlag=1
         installFlag=1
@@ -380,8 +234,8 @@ while [ $# -gt 0 ]; do
                 dosDisk=$2
                 shift
                 ;;
-            --install) 
-                pkgInstallFlag=1
+            --install)
+		installFlag=1
                 ;;
             --distro*)
                 if echo $1 | grep '=' >/dev/null ; then
@@ -536,36 +390,3 @@ fi
 if [ "$installFlag" == 1 ]; then
     install
 fi
-
-if [ "$pkgInstallFlag" == 1 ]; then
-    if [ -z $distro ]; then
-        findDistro
-    fi
-    if [ $pkgType != "deb" ]; then
-    install
-    else
-    	echo "Error: Automatic installs are not supported under $distro"
-        exit 2
-    fi
-fi
-
-if [ "$mkPkgFlag"  == 1 ]; then
-    if [ -z "$distro" ] || [ -z "$pkgType" ]; then
-        findDistro
-    fi
-
-    case $pkgType in
-        rpm)
-            makeRpm
-            ;;
-        deb)
-            makeDpkg
-            ;;
-        *)
-            echo "Error: $pkgType not supported with mkpkg. Supported package types are: $pkgSupported"
-            exit 1
-            ;;
-    esac    
-fi
-
-
