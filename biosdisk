@@ -19,7 +19,8 @@
 # Purpose: This program can be used to quickly create a bootable DOS disk
 # with a BIOS flash executable file
 #
-# Last Update: 2007-12-21
+set -e
+
 baseDir="/usr/share/biosdisk"
 confFile="/etc/biosdisk.conf"
 libDir="/var/lib/biosdisk"
