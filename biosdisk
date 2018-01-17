@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 #  Copyright (C) 2004 Dell Computer Corporation <john_hull@dell.com>
+#  Copyright (C) 2018 Dell Inc. <mario.limonciello@dell.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,14 +28,11 @@ confFile="/etc/biosdisk.conf"
 libDir="/var/lib/biosdisk"
 tmpPath="/tmp"
 curDir=`pwd`
-device="/dev/fd0"
 wget="/usr/bin/wget"
 options=""
 
 # Flags
-mkDisk=0 # TODO:used?
-mkFloppyFlag=0
-mkImgFlag=1 #TODO: needed?
+mkImgFlag=1
 installFlag=0
 imgCompleteFlag=0
 forceFlag=1
@@ -46,27 +44,14 @@ if [ -e "$confFile" ]; then
 fi
 
 destination=""
-dosDisk144="$baseDir/dosdisk.img"
-dosDisk288="$baseDir/dosdisk288.img"
-dosDisk8192="$baseDir/dosdisk8192.img"
-dosDisk20480="$baseDir/dosdisk20480.img"
-geometry_8192="floppy c=8 s=32 h=64"
-dosDisk=$dosDisk20480
-geometry_floppy=$geometry_8192
-pkgSupported="Rpm, Dpkg"
-rpmBaseDir="$libDir/rpm"
-dpkgPath=""
-dpkgName=""
 
 ####################### Functions ########################
 function showUsage()
 {
-    echo $"Usage: $0 [action] [options] /path/fileName[.img|.exe]"
-    echo $"  [action]  =  { mkfloppy | mkimage | install | uninstall} "
-    echo $"  [options] =  [-o option ] [-d device] [ -k basimage]"
-    echo $"               [-i destination] [--install] [--distro=<distro>]"
-    echo $"               [--name=<pkg name>] [--version=<pkg version>]"
-    echo $"               [--release=<pkg release>] [--bioslog=<bios changelog>]"
+    echo $"Usage: $0 [action] [options] /path/fileName.exe"
+    echo $"  [action]  =  { mkimage | install | uninstall} "
+    echo $"  [options] =  [-o exe_option ]"
+    echo $"               [-i destination]"
     echo $"               [-h|--help]"
 }
 
@@ -97,9 +82,9 @@ function makeImage()
     fi
 
     tmpMount=$(mktemp -d /tmp/biosdisk.XXXXXX)
-    cp -f $baseDir/freedos-iso/* $tmpMount
+    cp -R $baseDir/freedos-iso/* $tmpMount
     cp -f $biosFile $tmpMount/${shortBiosName}
-    echo "$shortBiosName $options" > $tmpMount/setup.bat
+    echo "$shortBiosName $options" >> $tmpMount/setup.bat
     unix2dos $tmpMount/setup.bat > /dev/null 2>&1
     mkisofs -o $destination -q -l -N -boot-info-table \
             -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
@@ -111,6 +96,14 @@ function setupPxe()
     echo "Not yet supported"
     exit 1
 
+}
+
+function test_root()
+{
+    if [ `id -u` != 0 ]; then
+        echo "Error: You must run $0 as root"
+        exit 0
+    fi
 }
 
 function install()
@@ -173,7 +166,7 @@ function shortname()
 if [ $# -eq 0 ]; then
     showUsage
     exit 1
-fi   
+fi
 
 if [ -d /sys/firmware/efi ]; then
     echo "Warning: biosdisk images will not work in EFI mode"
@@ -194,10 +187,6 @@ esac
 
 # find biosdisk action
 case $1 in
-    mkfloppy|mkFloppy)
-        mkImgFlag=1
-        mkFloppyFlag=1
-        ;;
     mkimage|mkImage)
 	mkImgFlag=1
         ;;
@@ -224,77 +213,10 @@ while [ $# -gt 0 ]; do
                 options="$options $2"
                 shift
                 ;;
-            -d)
-                device=$2
-                shift
-                ;;
-            -i) 
+            -i)
                 destination=$2
                 destSpecifiedFlag=1
                 shift
-                ;;
-            -k)
-                dosDisk=$2
-                shift
-                ;;
-            --install)
-		installFlag=1
-                ;;
-            --distro*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    distro=`echo $1 | sed 's/^.*=//'`
-                else
-                    distro="$2"
-                    shift
-                fi
-                ;;
-            --name*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgName=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgName="$2"
-                    shift
-                fi
-                ;;
-            --version*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgVersion=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgVersion="$2"
-                    shift
-                fi
-                ;;
-            --release*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgRelease=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgRelease="$2"
-                    shift
-                fi
-                ;;
-            --pkgtype*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    pkgType=`echo $1 | sed 's/^.*=//'`
-                else
-                    pkgType="$2"
-                    shift
-                fi
-                ;;
-            --title*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    title=`echo $1 | sed 's/^.*=//'`
-                else
-                    title="$2"
-                    shift
-                fi
-                ;;
-            --bioslog*)
-                if echo $1 | grep '=' >/dev/null ; then
-                    biosChangeLog=`echo $1 | sed 's/^.*=//'`
-                else
-                    biosChangeLog="$2"
-                    shift
-                fi
                 ;;
             *)
                 echo "Error: $0 does not take \"$1 $2\" as an option"
@@ -336,13 +258,8 @@ while [ $# -gt 0 ]; do
 			    exit 1
 			fi
                         fileName=`basename $file | cut -d. -f1`
-                        fileExt=`basename $file | rev | cut -d. -f1 | rev`                 
+                        fileExt=`basename $file | rev | cut -d. -f1 | rev`
                         case $fileExt in
-                            img|IMG)
-                                imgCompleteFlag=1
-                                destSpecifiedFlag=1
-                                destination=$file
-                                ;;
                             exe|EXE)
                                 biosPath=`dirname $file`
                                 biosFile=$file
@@ -350,7 +267,7 @@ while [ $# -gt 0 ]; do
 				shortBiosName=$(shortname $biosName)
                                 ;;
                             *)
-                                echo "Error: $file must end in .img or .exe"
+                                echo "Error: $file must end in .exe"
                                 showUsage
                                 exit 1
                                 ;;
@@ -364,13 +281,8 @@ while [ $# -gt 0 ]; do
                ;;
         esac
     fi
-    shift    
+    shift
 done
-
-if [ `id -u` != 0 ]; then
-    echo "Error: You must run $0 as root"
-    exit 0
-fi
 
 if [ -z $file ]; then
     echo "Error: must enter filename"
@@ -379,12 +291,15 @@ if [ -z $file ]; then
 fi
 
 if [ -z "$destination" ]; then
-    destination=$tmpPath/$fileName.img
+    destination=$tmpPath/$fileName.iso
+fi
+if [ "$installFlag" == 1 ] || [ "$uninstallFlag" == 1 ]; then
+    test_root
 fi
 
 if [ "$uninstallFlag" == 1 ]; then
     uninstall
-fi 
+fi
 
 if [ "$mkImgFlag" == 1 ] && [ "$imgCompleteFlag" == 0 ]; then
     makeImage

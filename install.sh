@@ -8,11 +8,6 @@ mkdir -p /var/lib/biosdisk
 mkdir -p /usr/share/biosdisk
 
 install -m 755 biosdisk /usr/sbin
-#install -m 755 geturl /usr/sbin
-install -m 644 dosdisk.img /usr/share/biosdisk
-install -m 644 dosdisk288.img /usr/share/biosdisk
-install -m 644 dosdisk8192.img /usr/share/biosdisk
-install -m 644 dosdisk20480.img /usr/share/biosdisk
 install -m 644 biosdisk.conf /etc/
 install -m 644 biosdisk.8.gz /usr/share/man/man8
 install -m 644 42_biosdisk /usr/share/biosdisk

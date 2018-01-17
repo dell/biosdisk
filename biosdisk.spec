@@ -34,12 +34,9 @@ mkdir -p %{buildroot}/%{_sysconfdir}
 
 #place files
 install -m 755 biosdisk %{buildroot}%{_sbindir}
-install -m 644 dosdisk.img %{buildroot}%{_datadir}/%{name}
-install -m 644 dosdisk288.img %{buildroot}%{_datadir}/%{name}
-install -m 644 dosdisk8192.img %{buildroot}%{_datadir}/%{name}
-install -m 644 dosdisk20480.img %{buildroot}%{_datadir}/%{name}
 install -m 644 biosdisk.conf %{buildroot}/%{_sysconfdir}
 install -m 644 biosdisk.8.gz %{buildroot}%{_mandir}/man8
+cp -R freedos-iso %{buildroot}%{_datadir}/%{name}
 
 %clean
 rm -rf %{buildroot}
