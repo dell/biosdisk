@@ -24,9 +24,10 @@ rsync -av --exclude='tmp' ../.. .
 make
 
 %install
-make install	sharedstatedir=%{buildroot}%{_localstatedir}/lib/%{name} \
-		confdir=%{buildroot}/%{_sysconfdir}/ \
-		prefix=%{buildroot}/%{_prefix}/
+make install	DESTDIR=%{buildroot} \
+		sharedstatedir=%{_localstatedir}/lib/%{name} \
+		confdir=%{_sysconfdir}/ \
+		prefix=%{_prefix}/
 
 %clean
 rm -rf %{buildroot}
