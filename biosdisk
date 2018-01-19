@@ -110,7 +110,7 @@ function install()
     local kernel="/boot/memdisk"
     if [ ! -f $kernel ]; then
         memdisk_done=0
-        for i in /usr/lib/syslinux/memdisk /usr/share/syslinux/memdisk
+        for i in /usr/lib/syslinux/memdisk /usr/lib/syslinux/bios/memdisk /usr/share/syslinux/memdisk
         do
             if [ -e $i ]; then
                 cp -f $i $kernel
