@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-source "$pkgdatadir/grub-mkconfig_lib"
-
 cat << EOF
 menuentry "Flash BIOS" {
 	linux16 /boot/memdisk iso
