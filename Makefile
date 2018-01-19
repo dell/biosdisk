@@ -1,5 +1,6 @@
 #!/usr/bin/make
 
+DESTDIR =
 prefix ?= /usr/
 confdir ?= /etc/
 sbindir ?= $(prefix)sbin
@@ -37,16 +38,16 @@ clean-packages:
 	rm -fr tmp
 
 install: all
-	mkdir -p $(sharedstatedir)
-	mkdir -p $(datadir)
-	mkdir -p $(sbindir)
-	mkdir -p $(mandir)
-	mkdir -p $(confdir)
-	install -m 755 biosdisk $(sbindir)
-	install -m 644 biosdisk.conf $(confdir)
-	install -m 644 biosdisk.8.gz $(mandir)
-	install -m 755 42_biosdisk $(datadir)
-	cp -R freedos-iso $(datadir)
+	mkdir -p $(DESTDIR)$(sharedstatedir)
+	mkdir -p $(DESTDIR)$(datadir)
+	mkdir -p $(DESTDIR)$(sbindir)
+	mkdir -p $(DESTDIR)$(mandir)
+	mkdir -p $(DESTDIR)$(confdir)
+	install -m 755 biosdisk $(DESTDIR)$(sbindir)
+	install -m 644 biosdisk.conf $(DESTDIR)$(confdir)
+	install -m 644 biosdisk.8.gz $(DESTDIR)$(mandir)
+	install -m 755 42_biosdisk $(DESTDIR)$(datadir)
+	cp -R freedos-iso $(DESTDIR)$(datadir)
 
 clean:
 	rm -f biosdisk.8.gz
