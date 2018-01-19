@@ -132,7 +132,7 @@ function install()
         chmod +x $grubDir/42_biosdisk
     fi
     sed -i "s,initrd16.*,initrd16 $destination," $grubDir/42_biosdisk
-    update-grub
+    grub-mkconfig -o /boot/grub/grub.cfg
     grub-reboot "Flash BIOS"
     echo "Copied image to $destination and updated bootloader"
 
@@ -141,7 +141,7 @@ function install()
 function uninstall()
 {
     rm -f $grubDir/42_biosdisk
-    update-grub
+    grub-mkconfig -o /boot/grub/grub.cfg
     if [ `dirname $destination` != "/boot" ]; then
         destination=/boot/`basename $destination`
         rm -f $destination
@@ -277,7 +277,7 @@ while [ $# -gt 0 ]; do
                                 showUsage
                                 exit 1
                                 ;;
-                            esac 
+                            esac
                     fi
                 else
                     echo "Error: $0 does not take \"$1\" as an option"
