@@ -85,9 +85,9 @@ function makeImage()
     cp -R $baseDir/freedos-iso/* $tmpMount
     cp -f $biosFile $tmpMount/${shortBiosName}
     echo "$shortBiosName $options" >> $tmpMount/setup.bat
-    mkisofs -o $destination -l -N -boot-info-table \
-            -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
-            -publisher "Dell" -A "Freedos distribution" -V FDOS -v $tmpMount
+    genisoimage -o $destination -l -N -boot-info-table \
+                -iso-level 4 -no-emul-boot -b isolinux/isolinux.bin \
+                -publisher "Dell" -A "Freedos distribution" -V FDOS -v $tmpMount
 }
 
 function setupPxe()
