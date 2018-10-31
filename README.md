@@ -14,7 +14,7 @@ update using UEFI capsule as described at https://www.dell.com/support/article/u
 # make install
 ```
 
-Optinally if running on a Debian based distribution you can also generate
+Optimally if running on a Debian based distribution you can also generate
 packages using `dpkg-buildpackage`.
 
 # Usage
