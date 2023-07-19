@@ -20,7 +20,7 @@ packages using `dpkg-buildpackage`.
 # Usage
 To find what options are available to use when executing the biosdisk script,
 ```
-#biosdisk --help
+# biosdisk --help
 ```
 
 Generating an ISO image
