@@ -5,7 +5,7 @@ FreeDOS based BIOS updating utility for Dell machines.
 This utility can be used to update the BIOS on a Dell machine running in
 legacy mode.
 If your machine is running in UEFI mode, it's recommended that you instead
-update using UEFI capsule as described at https://www.dell.com/support/article/us/en/19/sln171755/updating-the-dell-bios-in-linux-and-ubuntu-environments?lang=en
+update using UEFI capsule as described at [dell site](https://www.dell.com/support/article/us/en/19/sln171755/updating-the-dell-bios-in-linux-and-ubuntu-environments?lang=en)
 
 ## Installation
 1. Install syslinux on your system
@@ -20,7 +20,7 @@ packages using `dpkg-buildpackage`.
 # Usage
 To find what options are available to use when executing the biosdisk script,
 ```
-#biosdisk --help
+# biosdisk --help
 ```
 
 Generating an ISO image
